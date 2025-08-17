@@ -51,10 +51,6 @@ An AI Chatbot which can simulate memory using technology like semantic searching
 2. wail for few seconds the gui will pop up after connecting to database and openai client
 3. continue using it in the UI
    <img width="1923" height="1203" alt="image" src="https://github.com/user-attachments/assets/00faa8ba-167a-43e2-b438-1d71ecc0e004" />
-   <video width="800" autoplay muted loop controls>
-  <source src="https://github.com/user-attachments/assets/eaf298f9-11ef-4b4b-804b-61b481d88eec" type="video/mp4">
-  Your browser does not support the video tag.
-</video>
    <video width="1923" height="1203" alt="video" src="https://github.com/user-attachments/assets/eaf298f9-11ef-4b4b-804b-61b481d88eec" type="video/mp4"/>
 
 # Project Structure
