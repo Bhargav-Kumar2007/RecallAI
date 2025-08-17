@@ -54,7 +54,7 @@ An AI Chatbot which can simulate memory using technology like semantic searching
    https://github.com/user-attachments/assets/39280c96-4737-4749-a90d-a322785de4bb
 
 # Project Structure
-your-repo/
+repo/
 ├── type2.py                 # Main chatbot program
 ├── requirements.txt         # Python dependencies
 ├── README.md                # Project documentation
@@ -101,6 +101,9 @@ Voice & Input (Future-ready):
    Theme selector — light, dark, or custom colors.
    “Jarvis Mode” toggle — extra fancy AI responses with personality.
    Easter egg button — trigger some quirky AI behavior or joke.
+
+# Old Idea
+I have included an old idea in `pyfile.py`. Anyone interested is welcome to explore it, understand it, and reach out to me for collaboration or discussion.
 
 # Contributing
 Pull requests are welcome.
