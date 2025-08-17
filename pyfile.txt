@@ -1,0 +1,193 @@
+import firebase_admin
+from firebase_admin import credentials, db
+from openai import OpenAI
+from datetime import datetime,timedelta
+
+#setting up api key to access ai for the job
+client = OpenAI(
+  base_url="https://openrouter.ai/api/v1",
+  api_key="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",
+)
+
+# Load the service account key
+if not firebase_admin._apps:
+  cred = credentials.Certificate("memory-bot-api-key.json")
+
+  # Initialize the app
+  firebase_admin.initialize_app(cred, {
+      'databaseURL': 'https://ai-memory-bot-default-rtdb.asia-southeast1.firebasedatabase.app/'
+  })
+ref = db.reference('messages')
+ref2 = db.reference('tags')
+def create_db():
+  # Reading all messages
+  all_msgs: dict = ref.get()
+  if all_msgs is None:
+    msgs=[]
+  else:
+    msgs = [all_msgs[i] for i in all_msgs]
+    msgs.sort(key=lambda x: x["timestamp"], reverse=True)
+  return msgs
+
+
+def tag_creation(userask):
+  if ref2.get():
+    flag=1
+    tag_list = list(tuple(ref2.get().values()))
+    prompt_tags = f"""
+You are a smart tagging assistant.
+
+Your job is to extract **conceptual tags** from the message below. Tags should reflect the **intent**, **tone**, and **topic**.
+
+🔹 Output a **Python-style lowercase list** of concise, meaningful tags.
+🔹 Only include **critical and unique tags** — do **not repeat synonyms**.
+🔹 Use this list of previously used tags: {tag_list}
+    - If any match or relate, **re-use them as it is don't change anything**
+    - Add new tags **only if necessary**
+❌ Do not include explanations, repeated meanings, or unrelated keywords.
+✅ List should be sorted like most prominent/technical tag to the least prominent tags
+Message:
+\"\"\"{userask}\"\"\"
+
+🟡 Output format:
+["tag1", "tag2", "tag3",...]
+
+❌ Do NOT include:
+- Markdown syntax
+- Explanations or notes
+- Quotation marks outside the list
+- Code blocks
+"""
+  else:
+    flag=0
+    prompt_tags = f"""You are a tagging assistant.
+Your job is to extract conceptual tags from the following message. Tags should reflect the intent, tone, and topic of the message. Output ONLY a lowercase python list saparated by comma with relevant tags. Do NOT include any unrelated keywords or extra information. Do not add words that mean similar .Do focus on the critical points.
+Message:
+\"\"\"{userask}\"\"\"
+
+🟡 Output format:
+["tag1", "tag2", "tag3",...]
+
+❌ Do NOT include:
+- Markdown syntax
+- Explanations or notes
+- Quotation marks outside the list
+- Code blocks
+"""
+  #creating tags
+  completion = client.chat.completions.create(
+    model="mistralai/mistral-small-3.2-24b-instruct:free",
+    messages=[
+      {
+        "role": "user",
+        "content": prompt_tags
+      }
+    ],
+    temperature=0.2
+  )
+  tags = completion.choices[0].message.content.replace(" ","").replace("[","").replace("]","").split(",")
+  if flag:
+    for i in tags:
+      if i not in tag_list:
+        ref2.push(i)
+  else:
+    for i in tags:
+      ref2.push(i)
+  return tags
+
+def shortlist_tags(tags,msgs):
+  dih={}
+  for i in tags:
+    for j in msgs:
+      if i in j.get("tags",[]):
+        if j in dih.keys():
+          dih[j] += 1
+        else:
+          dih[j] = 1
+  lst=[]
+  for i in sorted(dih,key=lambda x: dih[x],reverse=True):
+      lst.append(i)
+  return lst
+
+def shortlist_time(days,hours,msgs):
+  now = datetime.now()
+  cutoff = now - timedelta(days=days, hours=hours)
+  lst=[]
+  for i in msgs:
+    if i["timestamp"] <= cutoff:
+      lst.append(i)
+  lst.sort(key=lambda x: x["timestamp"], reverse=True)
+  return lst
+
+
+def summerize(msgs):
+  if len(msgs)==0:
+    msgs = ""
+    return None
+  messages=[]
+  replies=[]
+  for i in msgs[::-1]:
+    messages.append(i.get("message",[]))
+    messages.append(i.get("reply",[]))
+  summarization_prompt = f"""
+You are a helpful assistant.
+
+Below is a conversation between a user and an AI assistant. Summarize it in a short paragraph (or bullets) capturing the main topic, user's intent, and assistant's guidance.
+
+Messages:
+{messages}
+
+Replies:
+{replies}
+
+Output a concise summary of the conversation.
+"""
+  completion = client.chat.completions.create(model="meta-llama/llama-4-scout:free",messages=[{"role": "user","content": summarization_prompt}])
+  return completion.choices[0].message.content
+
+def limiting_element(msgs,num):
+  return msgs[:num]
+
+def AI_text_generate(msgs,userask):
+  if len(msgs)!=0:
+    convo={}
+    for i in msgs[::-1]:
+      convo[i.get("message","")]=i.get("reply","")
+    final_prompt=f"""You are a friendly advanced assistant helping the user based on their previous conversations given. You will be given a summarized string or a list of conversation and a prompt from the user.
+
+  Your task:
+  - Carefully analyze the content of the coversation given
+  - Understand what the user is asking now
+  - Respond based only on the filtered or summarized content in coversation
+  - Use reasoning, summarization, and synthesis skills to generate a helpful answer 
+  *do NOT explain your reason just respond like you are a part of the converation and more humanlike
+
+  Rely on the information in conversation — assume this is the complete relevant history and respond according to what user is asking.
+
+  previous conversation:
+  **{convo}**
+  user's prompt:
+  **{userask}**"""
+  else:
+    final_prompt=f"""You are a friendly advanced assistant. The user has not provided any previous conversation history.
+
+  Your task:
+  - Understand and analyze the user's current prompt
+  - Use reasoning, summarization, and synthesis skills to generate a helpful and intelligent response
+  - Since there is no past context, rely only on the user's current prompt for your answer
+  *do NOT explain your reason just respond like you are a part of the converation and more humanlike
+  user's prompt:
+  **{userask}**"""
+  final_output= client.chat.completions.create(
+  model="deepseek/deepseek-r1-0528:free",
+  messages=[{"role": "user","content":final_prompt}]
+  )
+  return final_output.choices[0].message.content
+
+def push(userask,reply,new_tags):
+  ref.push({
+      "message": userask,
+      "reply": reply,
+      "tags": new_tags,
+      "timestamp": datetime.now().isoformat()
+  })
