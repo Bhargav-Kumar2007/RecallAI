@@ -51,7 +51,7 @@ An AI Chatbot which can simulate memory using technology like semantic searching
 2. wail for few seconds the gui will pop up after connecting to database and openai client
 3. continue using it in the UI
    <img width="1923" height="1203" alt="image" src="https://github.com/user-attachments/assets/00faa8ba-167a-43e2-b438-1d71ecc0e004" />
-   <video  src="https://github.com/user-attachments/assets/39280c96-4737-4749-a90d-a322785de4bb"/>
+   <video width="1923" height="1203" alt="video" src="https://github.com/user-attachments/assets/eaf298f9-11ef-4b4b-804b-61b481d88eec"/>
 
 # Project Structure
 repo/
@@ -69,6 +69,10 @@ repo/
 3. OpenAI API
 4. SQLite
 5. dearpygui
+
+
+
+
 6. Tkinter
 7. chromadb
 
