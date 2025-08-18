@@ -30,7 +30,7 @@ timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
 conn.commit()
 client = OpenAI(
   base_url="https://openrouter.ai/api/v1",
-  api_key="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",
+  api_key="YOUR-API-KEY (openrouter.ai)",
 )
 conn.close()
 def chunk_split(prompt,csize,csmooth):
@@ -389,4 +389,5 @@ dpg.set_frame_callback(2,scroll)
 dpg.set_primary_window("MainWindow", True)
 dpg.start_dearpygui()
 dpg.destroy_context()
+
 print(screen_width,screen_height)
