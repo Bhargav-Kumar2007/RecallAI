@@ -23,7 +23,7 @@ def wait_for_file_free(filepath, timeout=10):
 def is_folder_free(folder_path, timeout=120):
     start_time = time.time()
     test_name = folder_path + "_testcheck"
-    while True:
+    while time.time() - start_time < timeout:
         try:
             # Try renaming folder
             os.rename(folder_path, test_name)
@@ -54,4 +54,5 @@ else:
 main_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "type2.py"))
 subprocess.Popen([sys.executable, main_path])
 print("Import completed successfully.")
+
 sys.exit(0)
