@@ -42,6 +42,7 @@ An AI Chatbot which can simulate memory using technology like semantic searching
   source venv/bin/activate   # On Windows: venv\Scripts\activate
 4. Install dependencies
   pip install -r requirements.txt
+5. change the API key at the starting
 
 # How to use?
 1. run the type2.py
